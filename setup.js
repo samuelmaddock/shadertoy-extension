@@ -11,10 +11,9 @@ class ShaderToy {
                 bottom: 0;
                 left: 0;
                 right: 0;
-                width: 100%;
-                height: 100%;
+                width: 1280px;
+                height: 720px;
                 z-index: 9999;
-                opacity: 0.8;
                 pointer-events: none;
                 `
       )
@@ -27,9 +26,15 @@ class ShaderToy {
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight
 
+    this.mVideo = vid
+
     this.mCanvas = canvas
     this.mGLContext = canvas.getContext('webgl2')
     this.mFPS = piCreateFPSCounter()
+
+    this.mTOffset = 0;
+    this.mTo = 0;
+    this.mTf = 0;
 
     this.mEffect = new Effect(
       this.mVR,
@@ -53,6 +58,32 @@ class ShaderToy {
   }
 
   newScriptJSON(jsn) {
+    try {
+      // transform api output to shadertoy input
+      const renderpasses = jsn.renderpass
+      for (let i = 0; i < renderpasses.length; i++) {
+        const renderpass = renderpasses[i]
+        const inputs = renderpass.inputs
+        for (let j = 0; j < inputs.length; j++) {
+          const input = inputs[j]
+          input.type = input.ctype
+
+          if (input.type === 'video') {
+            input.video = this.mVideo
+            input.sampler = {
+              filter: 'linear',
+              internal: 'byte',
+              srgb: 'false',
+              vflip: 'true',
+              wrap: 'clamp'
+            }
+          }
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+    
     try {
       var res = this.mEffect.newScriptJSON(jsn)
 
@@ -90,10 +121,13 @@ class ShaderToy {
     function renderLoop2() {
       if (me.mGLContext == null) return
 
+      me.mIsPaused = me.mVideo.paused; // SAM EDIT
+      me.mEffect.SetSamplerVFlip(0, 0, 'true');
+
       me.mEffect.RequestAnimationFrame(renderLoop2)
 
       if (me.mIsPaused && !me.mForceFrame) {
-        me.mEffect.UpdateInputs(me.mActiveDoc, false)
+        // me.mEffect.UpdateInputs(me.mActiveDoc, false)
         return
       }
       me.mForceFrame = false
@@ -185,14 +219,19 @@ class ShaderToy {
     //   gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, video)
     // }
 
-    // const video = document.querySelector('video')
+    const video = document.querySelector('video')
     // const tex = initTexture(gl)
     // updateTexture(gl, tex, video)
+
+    // TODO: see EffectPass.prototype.NewTexture, find a way to make it use an existing video object
+    this.mEffect.NewTexture(0, 0, { mType: 'video', video, mSampler: {} })
   }
 }
 
 gShadertoy = new ShaderToy()
 
 function setShader(json) {
+  console.log('SHADER', json)
   gShadertoy.dataLoadShader(json)
+  gShadertoy.updateTexture()
 }

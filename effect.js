@@ -1620,26 +1620,79 @@ EffectPass.prototype.NewTexture = function( wa, slot, url, buffers, cubeBuffers,
         this.MakeHeader();
         return returnValue;
     }
+    // else if( url.mType=="video" )
+    // {
+    // 	texture = {};
+    //     texture.mInfo = url;
+    //     texture.globject = null;
+    //     texture.loaded = false;
+    //     texture.video = document.createElement('video');
+    // 	texture.video.loop = true;
+    //     texture.video.mPaused = this.mForcePaused;
+    //     texture.video.mMuted = this.mForceMuted;
+    // 	texture.video.muted  = this.mForceMuted;
+    //     if( this.mForceMuted==true )
+    //         texture.video.volume = 0;
+    // 	texture.video.autoplay = false;
+    //     texture.video.hasFalled = false;
+        
+    //     var rti = me.Sampler2Renderer(url.mSampler);
+
+    //     texture.video.addEventListener("canplay", function (e)
+    //     {
+    //         texture.video.play();
+    //         texture.video.mPaused = false;
+
+    //         //var rti = me.Sampler2Renderer(url.mSampler);
+
+    //         texture.globject = renderer.CreateTextureFromImage(renderer.TEXTYPE.T2D, texture.video, renderer.TEXFMT.C4I8, rti.mFilter, rti.mWrap, rti.mVFlip);
+    //         texture.loaded = true;
+            
+    //         if( me.mTextureCallbackFun!=null )
+    //             me.mTextureCallbackFun( me.mTextureCallbackObj, slot, texture.video, true, 3, 1, -1.0, me.mID );
+
+    //     } );
+
+    //     texture.video.addEventListener( "error", function(e)
+    //     {
+    //            if( texture.video.hasFalled==true ) { alert("Error: cannot load video" ); return; }
+    //            var str = texture.video.src;
+    //            str = str.substr(0,str.lastIndexOf('.') ) + ".mp4";
+    //            texture.video.src = str;
+    //            texture.video.hasFalled = true;
+    //     } );
+
+    //     texture.video.src = url.mSrc;
+
+    //     var returnValue = { mFailed:false, mNeedsShaderCompile: (this.mInputs[slot]==null ) || (
+    //                                                             (this.mInputs[slot].mInfo.mType!="texture") && 
+    //                                                             (this.mInputs[slot].mInfo.mType!="webcam") && 
+    //                                                             (this.mInputs[slot].mInfo.mType!="mic") && 
+    //                                                             (this.mInputs[slot].mInfo.mType!="music") && 
+    //                                                             (this.mInputs[slot].mInfo.mType!="musicstream") && 
+    //                                                             (this.mInputs[slot].mInfo.mType!="keyboard") && 
+    //                                                             (this.mInputs[slot].mInfo.mType!="video")) };
+    //     this.DestroyInput( slot );
+    //     this.mInputs[slot] = texture;
+    //     this.MakeHeader();
+    //     return returnValue;
+    // }
     else if( url.mType=="video" )
     {
     	texture = {};
         texture.mInfo = url;
         texture.globject = null;
         texture.loaded = false;
-        texture.video = document.createElement('video');
-    	texture.video.loop = true;
+        texture.video = url.video;
         texture.video.mPaused = this.mForcePaused;
         texture.video.mMuted = this.mForceMuted;
-    	texture.video.muted  = this.mForceMuted;
-        if( this.mForceMuted==true )
-            texture.video.volume = 0;
-    	texture.video.autoplay = false;
         texture.video.hasFalled = false;
         
         var rti = me.Sampler2Renderer(url.mSampler);
 
-        texture.video.addEventListener("canplay", function (e)
-        {
+        const onVideoReady = () => {
+            if (texture.loaded) return;
+
             texture.video.play();
             texture.video.mPaused = false;
 
@@ -1650,7 +1703,15 @@ EffectPass.prototype.NewTexture = function( wa, slot, url, buffers, cubeBuffers,
             
             if( me.mTextureCallbackFun!=null )
                 me.mTextureCallbackFun( me.mTextureCallbackObj, slot, texture.video, true, 3, 1, -1.0, me.mID );
-
+        }
+        
+        if (texture.video.readyState > 0) {
+            onVideoReady()
+        }
+        
+        texture.video.addEventListener("canplay", function (e)
+        {
+            onVideoReady();
         } );
 
         texture.video.addEventListener( "error", function(e)
@@ -1661,8 +1722,6 @@ EffectPass.prototype.NewTexture = function( wa, slot, url, buffers, cubeBuffers,
                texture.video.src = str;
                texture.video.hasFalled = true;
         } );
-
-        texture.video.src = url.mSrc;
 
         var returnValue = { mFailed:false, mNeedsShaderCompile: (this.mInputs[slot]==null ) || (
                                                                 (this.mInputs[slot].mInfo.mType!="texture") && 
@@ -1996,7 +2055,7 @@ EffectPass.prototype.Paint_Image = function( vrData, wa, d, time, dtime, fps, mo
         }
         else if( inp.mInfo.mType=="video" )
         {
-            if( inp.video.mPaused == false )
+            if( inp.video.paused == false )
             {
                 if( this.mTextureCallbackFun!=null )
                     this.mTextureCallbackFun( this.mTextureCallbackObj, i, inp.video, false, 3, 1, inp.video.currentTime, this.mID );
@@ -2009,7 +2068,7 @@ EffectPass.prototype.Paint_Image = function( vrData, wa, d, time, dtime, fps, mo
                 texID[i] = inp.globject;
 
 
-      	        if( inp.video.mPaused == false )
+      	        if( inp.video.paused == false )
       	        {
       	            this.mRenderer.UpdateTextureFromImage(inp.globject, inp.video);
                     if( inp.mInfo.mSampler.filter === "mipmap" )
@@ -2556,7 +2615,7 @@ EffectPass.prototype.ProcessInputs = function(vrData, wa, d, time, dtime, fps, m
         }
         else if( inp.mInfo.mType=="video" )
         {
-            if( inp.video.mPaused == false )
+            if( inp.video.paused == false )
             {
                 if( this.mTextureCallbackFun!=null )
                     this.mTextureCallbackFun( this.mTextureCallbackObj, i, inp.video, false, 3, 1, inp.video.currentTime, this.mID );
@@ -2564,7 +2623,7 @@ EffectPass.prototype.ProcessInputs = function(vrData, wa, d, time, dtime, fps, m
 
             if( inp.loaded==true )
             { 
-      	        if( inp.video.mPaused == false )
+      	        if( inp.video.paused == false )
       	        {
       	            this.mRenderer.UpdateTextureFromImage(inp.globject, inp.video);
                     if( inp.mInfo.mSampler.filter === "mipmap" )
@@ -3731,6 +3790,7 @@ Effect.prototype.newScriptJSON = function( jobj )
         }
         for (var i = 0; i < numInputs; i++)
         {
+            const input = rpass.inputs[i]; // SAM EDIT
             var lid = rpass.inputs[i].channel;
             var styp = rpass.inputs[i].type;
             var sid = rpass.inputs[i].id;
@@ -3738,7 +3798,7 @@ Effect.prototype.newScriptJSON = function( jobj )
             var psrc = rpass.inputs[i].previewfilepath;
             var samp = rpass.inputs[i].sampler;
 
-            this.mPasses[j].NewTexture(this.mAudioContext, lid, { mType: styp, mID: sid, mSrc: ssrc, mSampler: samp, mPreviewSrc: psrc }, this.mBuffers, this.mCubeBuffers, this.mKeyboard);
+            this.mPasses[j].NewTexture(this.mAudioContext, lid, { ...input, mType: styp, mID: sid, mSrc: ssrc, mSampler: samp, mPreviewSrc: psrc }, this.mBuffers, this.mCubeBuffers, this.mKeyboard);
         }
 
         for (var i = 0; i < 4; i++)

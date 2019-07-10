@@ -36,6 +36,9 @@ chrome.browserAction.onClicked.addListener(async tab => {
 
     // https://www.shadertoy.com/view/ldXGW4
     const shaderId = 'ldXGW4'
+    // const shaderId = 'XtK3W3'
+    // const shaderId = 'lssBDs'
+    // const shaderId = 'MddSRB'
     const { Shader: shaderScript } = await fetchShaderById(shaderId)
     console.log('SHADER SCRIPT', shaderScript)
 
