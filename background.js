@@ -14,6 +14,7 @@ const fetchShaderById = async (id) => {
 const injectScript = (tabId, details) => new Promise((resolve, reject) => {
     chrome.tabs.executeScript(tabId, details, () => {
         if (chrome.runtime.lastError) {
+            console.log(`ExecuteScript error: ${chrome.runtime.lastError}`)
             reject(chrome.runtime.lastError.message)
         } else {
             resolve()
@@ -21,13 +22,13 @@ const injectScript = (tabId, details) => new Promise((resolve, reject) => {
     })
 })
 
-const injectScripts = (tabId, details) => {
+const injectScripts = async (tabId, details) => {
     const files = Array.isArray(details.file) ? details.file : [details.file]
-    const promises = files.map(file => {
-        const { files, ...restDetails } = details
-        return injectScript(tabId, { ...restDetails, file })
-    })
-    return Promise.all(promises)
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        const { files: _, ...restDetails } = details
+        await injectScript(tabId, { ...restDetails, file })
+    }
 }
 
 chrome.browserAction.onClicked.addListener(async tab => {

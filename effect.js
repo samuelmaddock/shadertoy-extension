@@ -3995,3 +3995,5 @@ Effect.prototype.calcFlags = function () {
         mFlagMusicStream: flagMusicStream
     };
 }
+
+void 0;

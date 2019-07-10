@@ -235,3 +235,5 @@ function setShader(json) {
   gShadertoy.dataLoadShader(json)
   gShadertoy.updateTexture()
 }
+
+void 0;
