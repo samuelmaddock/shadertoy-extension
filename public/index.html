@@ -3,8 +3,25 @@
   <head>
     <title>Shadertoy Effects</title>
     <style>
-      #glcanvas,
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+      .controls {
+        background: #ddd;
+        border: 1px solid #000;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+      #glcanvas {
+        width: 100%;
+        height: 100%;
+        background: #444;
+      }
       #capturevideo {
+        display: none;
         width: 1280px;
         height: 720px;
         background: #ddd;
@@ -13,7 +30,7 @@
     </style>
   </head>
   <body>
-    <div>
+    <div class="controls">
       <button id="startcapture">Capture Screen</button>
       <button id="stopcapture" disabled>Stop</button>
     </div>
@@ -74,16 +91,9 @@
         const video = document.getElementById('capturevideo')
         const canvas = document.getElementById('glcanvas')
 
-        const displayMediaOptions = {
-          video: {
-            cursor: 'never'
-          },
-          audio: false
-        }
-
         let stream = null
 
-        async function startCapture() {
+        async function startCapture(displayMediaOptions) {
           let captureStream = null
           try {
             captureStream = await navigator.mediaDevices.getDisplayMedia(displayMediaOptions)
@@ -94,14 +104,21 @@
         }
 
         async function onStartCaptureClick() {
-          stream = await startCapture()
+          const rect = document.body.getBoundingClientRect()
+
+          stream = await startCapture({
+            video: {
+              frameRate: 60,
+              cursor: 'never',
+            },
+            audio: false
+          })
           video.srcObject = stream
           startBtn.disabled = true
           stopBtn.disabled = false
 
-        //   const rect = canvas.getBoundingClientRect()
-        //   canvas.width = rect.width
-        //   canvas.height = rect.height
+          canvas.width = rect.width
+          canvas.height = rect.height
 
           setShader(SHADER_SCRIPT)
         }

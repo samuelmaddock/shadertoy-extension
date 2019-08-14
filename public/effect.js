@@ -1693,16 +1693,17 @@ EffectPass.prototype.NewTexture = function( wa, slot, url, buffers, cubeBuffers,
         const onVideoReady = () => {
             if (texture.loaded) return;
 
-            texture.video.play();
-            texture.video.mPaused = false;
+            const vid = texture.video || texture.mInfo && texture.mInfo.video
+            vid.play();
+            vid.mPaused = false;
 
             //var rti = me.Sampler2Renderer(url.mSampler);
 
-            texture.globject = renderer.CreateTextureFromImage(renderer.TEXTYPE.T2D, texture.video, renderer.TEXFMT.C4I8, rti.mFilter, rti.mWrap, rti.mVFlip);
+            texture.globject = renderer.CreateTextureFromImage(renderer.TEXTYPE.T2D, vid, renderer.TEXFMT.C4I8, rti.mFilter, rti.mWrap, rti.mVFlip);
             texture.loaded = true;
             
             if( me.mTextureCallbackFun!=null )
-                me.mTextureCallbackFun( me.mTextureCallbackObj, slot, texture.video, true, 3, 1, -1.0, me.mID );
+                me.mTextureCallbackFun( me.mTextureCallbackObj, slot, vid, true, 3, 1, -1.0, me.mID );
         }
         
         if (texture.video.readyState > 0) {

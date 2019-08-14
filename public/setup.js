@@ -205,9 +205,10 @@ class ShaderToy {
   }
 }
 
-gShadertoy = new ShaderToy()
+var gShadertoy;
 
 function setShader(json) {
+  gShadertoy = gShadertoy || new ShaderToy()
   console.log('SHADER', json)
   gShadertoy.dataLoadShader(json)
   gShadertoy.updateTexture()
